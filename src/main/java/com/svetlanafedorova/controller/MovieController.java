@@ -28,11 +28,6 @@ public class MovieController {
         initDb();
     }
 
-    @GET
-    public Uni<List<Movie>> get() {
-        return Movie.findAll(client);
-    }
-
     private void initDb() {
         client.query("drop table if exists movies").execute()
                 .flatMap(m -> client.query("create table movies (id serial primary key, title text not null)")
@@ -40,6 +35,11 @@ public class MovieController {
                 .flatMap(m -> client.query("insert into movies (title) values ('The Lord of the Rings')").execute())
                 .flatMap(m -> client.query("insert into movies (title) values ('Harry Potter')").execute())
                 .subscribeAsCompletionStage();
+    }
+
+    @GET
+    public Uni<List<Movie>> get() {
+        return Movie.findAll(client);
     }
 
     @GET
@@ -66,7 +66,7 @@ public class MovieController {
     public Uni<Response> delete(@PathParam("id") Long id) {
         return Movie.delete(client, id)
                 .onItem()
-                .transform(deleted -> deleted ? Status.NO_CONTENT : Status.NOT_FOUND)
+                .transform(deleted -> Boolean.TRUE.equals(deleted) ? Status.NO_CONTENT : Status.NOT_FOUND)
                 .onItem()
                 .transform(status -> Response.status(status).build());
     }
